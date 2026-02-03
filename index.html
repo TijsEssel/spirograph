@@ -3,63 +3,77 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hypotrochoïde / Epitrochoïde – HTML5 Canvas</title>
+  <title>Hypotrochoïde / Epitrochoïde – HTML5 Canvas (Topbar)</title>
   <style>
     :root{
       --panel-bg:#f7f7f9;
-      --panel-border:#ddd;
-      --text:#111;
-      --accent:#2b6cb0;
+      --panel-border:#e5e7eb;
+      --text:#111827;
+      --accent:#2563eb;
       --info-bg:rgba(255,255,255,0.85);
+      --gap:12px;
     }
     *{box-sizing:border-box}
-    body{
-      margin:0; font: 16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, Noto Sans, sans-serif;
-      color:var(--text);
-      background:#fff;
-      display:grid; grid-template-columns: 320px 1fr; gap:0; min-height:100vh;
+    html, body{height:100%}
+    body{margin:0; font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, Noto Sans, sans-serif; color:var(--text); background:#fff; display:flex; flex-direction:column;}
+
+    /* --- Top panel above the canvas --- */
+    header.panel{position:sticky; top:0; z-index:10; background:var(--panel-bg); border-bottom:1px solid var(--panel-border); padding:10px var(--gap);}
+    header .title{font-size:1.05rem; font-weight:700; margin:0 0 8px 0}
+
+    /* Controls arranged responsively */
+    .controls{display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px var(--gap); align-items:center}
+    .ctrl{display:grid; grid-template-columns: 1fr 1fr; gap:8px; align-items:center}
+    .ctrl label{font-weight:600; font-size:0.95rem}
+    .ctrl input[type="number"]{width:100%; padding:8px 10px; border:1px solid #d1d5db; border-radius:6px}
+    .ctrl input[type="color"]{width:100%; height:40px; padding:0; border:1px solid #d1d5db; border-radius:6px}
+    .ctrl input[type="range"]{width:100%}
+
+    .buttons{display:flex; gap:8px; flex-wrap:wrap}
+    button{display:inline-flex; align-items:center; gap:6px; cursor:pointer; background:var(--accent); color:white; border:none; border-radius:8px; padding:10px 14px; font-weight:700; min-height:44px}
+    button.ghost{background:#e5e7eb; color:#111827}
+
+    .hint{margin-top:6px; color:#6b7280; font-size:0.9rem}
+
+    /* --- Canvas area --- */
+    main.canvas-wrap{position:relative; flex:1 1 auto; display:grid; place-items:center; padding:10px}
+    /* Canvas size is set via JS to be a centered square that fits on screen under the header. */
+    canvas{display:block; background:#ffffff; border-radius:10px; box-shadow:0 8px 28px rgba(0,0,0,.08)}
+    #info{position:absolute; left:16px; top:16px; background:var(--info-bg); padding:8px 10px; border-radius:8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:0.95rem; white-space:pre; backdrop-filter:saturate(180%) blur(2px)}
+    #warn{position:absolute; left:16px; bottom:16px; background:#ffe9e9; color:#7a0b0b; border:1px solid #f3b9b9; padding:8px 10px; border-radius:8px; display:none}
+
+    /* Larger screens: compact the rows a bit */
+    @media (min-width: 960px){
+      header .title{font-size:1.15rem}
     }
-    .panel{
-      padding:16px; background:var(--panel-bg); border-right:1px solid var(--panel-border);
-      position:sticky; top:0; align-self:start; height:100vh; overflow:auto;
-    }
-    .panel h1{font-size:1.15rem; margin:0 0 12px 0}
-    .panel .row{display:grid; grid-template-columns: 1fr 1fr; gap:8px; align-items:center; margin:8px 0}
-    .panel label{font-weight:600; font-size:0.95rem}
-    .panel input[type="number"]{width:100%; padding:6px 8px}
-    .panel input[type="color"]{width:100%; height:36px; padding:0; border:1px solid #ccc}
-    .panel button{display:inline-flex; align-items:center; gap:6px; cursor:pointer; background:var(--accent); color:white; border:none; border-radius:6px; padding:8px 12px; font-weight:600}
-    .panel .ghost{background:#e2e8f0; color:#111}
-    .panel small{color:#555}
-    .canvas-wrap{position:relative; height:100vh; display:grid; place-items:center;}
-    canvas{width:min(92vw, 100vh); height:min(92vw, 100vh); max-width:1400px; max-height:1400px; background:#fff; border-radius:8px; box-shadow:0 8px 28px rgba(0,0,0,.08)}
-    #info{position:absolute; left:12px; top:12px; background:var(--info-bg); padding:8px 10px; border-radius:8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:0.95rem; white-space:pre}
-    #warn{position:absolute; left:12px; bottom:12px; background:#ffe9e9; color:#7a0b0b; border:1px solid #f3b9b9; padding:6px 10px; border-radius:6px; display:none}
   </style>
 </head>
 <body>
-  <aside class="panel">
-    <h1>Hypotrochoïde / Epitrochoïde</h1>
-    <div class="row"><label for="R1">R1 (natuurlijk)</label><input id="R1" type="number" min="1" step="1" value="14"></div>
-    <div class="row"><label for="R2">R2 (geheel)</label><input id="R2" type="number" step="1" value="-5"></div>
-    <div class="row"><label for="delta">δ (% van |R2|)</label><input id="delta" type="number" min="0" max="300" step="1" value="150"></div>
-    <div class="row"><label for="curveColor">Kleur curve</label><input id="curveColor" type="color" value="#0074D9"></div>
-    <div class="row"><label for="bgColor">Achtergrond</label><input id="bgColor" type="color" value="#ffffff"></div>
-    <div class="row"><label for="speed">Snelheid</label><input id="speed" type="range" min="1" max="100" step="1" value="35"></div>
-    <div style="display:flex; gap:8px; margin-top:8px">
-      <button id="playPause">▶︎ Afspelen</button>
-      <button id="reset" class="ghost">↺ Reset</button>
+  <header class="panel" id="topbar">
+    <div class="title">Hypotrochoïde / Epitrochoïde</div>
+    <div class="controls">
+      <div class="ctrl"><label for="R1">R1 (natuurlijk)</label><input id="R1" type="number" min="1" step="1" value="14"></div>
+      <div class="ctrl"><label for="R2">R2 (geheel)</label><input id="R2" type="number" step="1" value="-5"></div>
+      <div class="ctrl"><label for="delta">δ (% van |R2|)</label><input id="delta" type="number" min="0" max="300" step="1" value="150"></div>
+      <div class="ctrl"><label for="curveColor">Kleur curve</label><input id="curveColor" type="color" value="#0074D9"></div>
+      <div class="ctrl"><label for="bgColor">Achtergrond</label><input id="bgColor" type="color" value="#ffffff"></div>
+      <div class="ctrl"><label for="speed">Snelheid</label><input id="speed" type="range" min="1" max="100" step="1" value="35"></div>
+      <div class="buttons">
+        <button id="playPause">▶︎ Afspelen</button>
+        <button id="reset" class="ghost">↺ Reset</button>
+      </div>
     </div>
-    <p><small>
-      Tip: Negatieve R2 ⇒ binnenrol (hypotrochoïde). Positieve R2 ⇒ buitenrol (epitrochoïde).<br>
-      δ bepaalt de afstand van het getraceerde punt t.o.v. het middelpunt van de rollende cirkel (als percentage van |R2|).
-    </small></p>
-  </aside>
+    <div class="hint">
+      Tip: Negatieve R2 ⇒ binnenrol (hypotrochoïde). Positieve R2 ⇒ buitenrol (epitrochoïde). δ bepaalt de afstand van het getraceerde punt t.o.v. het middelpunt van de rollende cirkel (als percentage van |R2|).
+    </div>
+  </header>
+
   <main class="canvas-wrap">
     <canvas id="c" width="900" height="900"></canvas>
     <div id="info"></div>
     <div id="warn"></div>
   </main>
+
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -67,25 +81,39 @@
   const ctx = c.getContext("2d");
   const info = $("info");
   const warn = $("warn");
+  const topbar = $("topbar");
 
-  // HiDPI schaling voor scherpe weergave
+  // Compute a square canvas that fits below the header on any screen
+  function sizeCanvas(){
+    const vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+    const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+    const headerH = topbar.offsetHeight || 0;
+    const availW = vw - 20; // padding margin
+    const availH = vh - headerH - 20;
+    const side = Math.max(200, Math.min(availW, availH));
+    c.style.width = side + 'px';
+    c.style.height = side + 'px';
+    setupHiDPI();
+  }
+
+  // HiDPI scaling based on the CSS pixel size of the canvas
   function setupHiDPI() {
     const ratio = Math.max(1, window.devicePixelRatio || 1);
-    const cssW = c.clientWidth, cssH = c.clientHeight;
+    const rect = c.getBoundingClientRect();
+    const cssW = Math.max(1, Math.round(rect.width));
+    const cssH = Math.max(1, Math.round(rect.height));
     c.width = Math.round(cssW * ratio);
     c.height = Math.round(cssH * ratio);
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
   }
-  setupHiDPI();
-  window.addEventListener('resize', setupHiDPI);
 
-  // Hulpjes
+  window.addEventListener('resize', () => { sizeCanvas(); recompute(); draw(); });
+
+  // Helpers
   const TAU = Math.PI * 2;
-  const sign = (x) => (x < 0 ? -1 : x > 0 ? 1 : 0);
-  const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
   function gcd(a, b){ a = Math.abs(Math.trunc(a)); b = Math.abs(Math.trunc(b)); if(a === 0) return b || 1; while(b){ [a,b] = [b, a % b]; } return a; }
 
-  // Invoer-elementen
+  // Inputs
   const inputs = {
     R1: $("R1"), R2: $("R2"), delta: $("delta"),
     curveColor: $("curveColor"), bgColor: $("bgColor"), speed: $("speed")
@@ -93,13 +121,13 @@
   const btnPlay = $("playPause");
   const btnReset = $("reset");
 
-  // Model-variabelen
+  // Model state
   let R1=14, R2=-5, delta=150;
   let curveColor = '#0074D9', bgColor = '#ffffff';
   let running = false;
   let t = 0, tEnd = 0, k = 0, x1 = 0;
   let lastTs = 0;
-  let points = []; // voor trace
+  let points = []; // trace
   let scale = 1, cx = 0, cy = 0, margin = 0;
 
   function readInputs(){
@@ -110,7 +138,6 @@
     bgColor = inputs.bgColor.value || '#ffffff';
   }
 
-  // Bereken parameters en tijdelijke tabellen op basis van invoer
   function recompute(){
     readInputs();
     warn.style.display = 'none';
@@ -127,26 +154,24 @@
     k = 1 + (R1 / R2);
     x1 = Math.abs(R2) * (delta/100);
 
-    // Schaal bepalen (zelfde gedachte als in het Python-script):
-    // m = 1.30*1*|R1| + 2*|R2| + 0.5*|x1|
+    // Schaal zoals in het Python-voorbeeld: m = 1.30*|R1| + 2*|R2| + 0.5*|x1|
     margin = 1.30 * Math.abs(R1) + 2*Math.abs(R2) + 0.5*Math.abs(x1);
     const maxSide = Math.min(c.clientWidth, c.clientHeight);
     scale = (0.90 * maxSide/2) / (margin || 1);
     cx = c.clientWidth/2; cy = c.clientHeight/2;
 
-    // Reset animatie-state
+    // Reset animatiestatus
     points = [];
     t = 0; lastTs = 0;
   }
 
   function worldToCanvas(x, y){
-    return [cx + x*scale, cy - y*scale]; // y-omkering
+    return [cx + x*scale, cy - y*scale]; // y omgekeerd
   }
 
   function speedRadPerSec(){
-    // Snelheids-schuif: 1..100. We mappen dit naar duur 3s..30s voor een volledige cyclus.
-    const s = +inputs.speed.value; // 1 (langzaam) .. 100 (snel)
-    const durationSec = 33 - (s * 0.3); // 1..100 -> ~33..3 (afgerond)
+    const s = +inputs.speed.value; // 1..100
+    const durationSec = 33 - (s * 0.3); // ~33..3 s per cyclus
     return (tEnd || 1) / durationSec;
   }
 
@@ -173,7 +198,7 @@
     const x = (R1pR2) * Math.cos(t) + x1 * Math.cos(k*t);
     const y = (R1pR2) * Math.sin(t) + x1 * Math.sin(k*t);
 
-    // Trace bijhouden
+    // Trace
     points.push([x,y]);
 
     // Grote cirkel
@@ -183,27 +208,16 @@
     ctx.arc(cx0, cy0, Math.abs(R1)*scale, 0, TAU);
     ctx.stroke();
 
-    // Kleine rollende cirkel (omtrek)
+    // Kleine rollende cirkel
     ctx.strokeStyle = '#2ca02c'; ctx.lineWidth = 1.0;
     ctx.beginPath();
     const [cxR2, cyR2] = worldToCanvas(xmR2, ymR2);
     ctx.arc(cxR2, cyR2, Math.abs(R2)*scale, 0, TAU);
     ctx.stroke();
 
-    // Straal vanaf oorsprong naar middelpunt R2 (straalR1)
-    ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(cx0, cy0);
-    ctx.lineTo(cxR2, cyR2);
-    ctx.stroke();
-
-    // Straal binnen de kleine cirkel (straalR2)
-    ctx.strokeStyle = '#2ca02c'; ctx.lineWidth = 2;
-    ctx.beginPath();
-    const [cxi, cyi] = worldToCanvas(x, y);
-    ctx.moveTo(cxR2, cyR2);
-    ctx.lineTo(cxi, cyi);
-    ctx.stroke();
+    // Stralen
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx0, cy0); ctx.lineTo(cxR2, cyR2); ctx.stroke();
+    ctx.strokeStyle = '#2ca02c'; ctx.lineWidth = 2; ctx.beginPath(); const [cxi, cyi] = worldToCanvas(x, y); ctx.moveTo(cxR2, cyR2); ctx.lineTo(cxi, cyi); ctx.stroke();
 
     // Trace tekenen
     ctx.strokeStyle = curveColor; ctx.lineWidth = 1.6;
@@ -214,55 +228,37 @@
     }
     ctx.stroke();
 
-    // Huidig punt
-    ctx.fillStyle = '#d62728';
-    ctx.beginPath(); ctx.arc(cxi, cyi, 4, 0, TAU); ctx.fill();
+    // Punten
+    ctx.fillStyle = '#d62728'; ctx.beginPath(); ctx.arc(cxi, cyi, 4, 0, TAU); ctx.fill();
     ctx.fillStyle = '#2ca02c'; ctx.beginPath(); ctx.arc(cxR2, cyR2, 4, 0, TAU); ctx.fill();
 
     // Live rotaties (in rot = rad/(2π))
-    const n_center = t / TAU;
-    const n_abs = (k * t) / TAU;
-    const n_rel = ((k * t) - t) / TAU;
-
-    info.textContent =
-      `omwentelingen      : ${n_center.toFixed(4)} rot\n`+
-      `relatieve rotaties : ${n_rel.toFixed(4)} rot\n`+
-      `absolute rotaties  : ${n_abs.toFixed(4)} rot`;
+    const n_center = t / TAU; const n_abs = (k * t) / TAU; const n_rel = ((k * t) - t) / TAU;
+    info.textContent = `omwentelingen      : ${n_center.toFixed(4)} rot\n`+
+                       `relatieve rotaties : ${n_rel.toFixed(4)} rot\n`+
+                       `absolute rotaties  : ${n_abs.toFixed(4)} rot`;
 
     ctx.restore();
   }
 
   function frame(ts){
     if(!lastTs) lastTs = ts;
-    const dt = (ts - lastTs) / 1000; // in seconden
-    lastTs = ts;
-    update(dt);
-    draw();
+    const dt = (ts - lastTs) / 1000; lastTs = ts;
+    update(dt); draw();
     requestAnimationFrame(frame);
   }
 
-  // UI events
+  // Events
   function onChange(){
     const wasRunning = running;
-    recompute();
-    running = wasRunning; // behoud status maar met reset t=0
-    btnPlay.textContent = running ? '❚❚ Pauze' : '▶︎ Afspelen';
+    recompute(); running = wasRunning; btnPlay.textContent = running ? '❚❚ Pauze' : '▶︎ Afspelen';
   }
   Object.values(inputs).forEach(el => el.addEventListener('input', onChange));
+  btnPlay.addEventListener('click', () => { if(R2 === 0) return; running = !running; btnPlay.textContent = running ? '❚❚ Pauze' : '▶︎ Afspelen'; });
+  btnReset.addEventListener('click', () => { recompute(); running = false; btnPlay.textContent = '▶︎ Afspelen'; draw(); });
 
-  btnPlay.addEventListener('click', () => {
-    if(R2 === 0) return;
-    running = !running;
-    btnPlay.textContent = running ? '❚❚ Pauze' : '▶︎ Afspelen';
-  });
-
-  btnReset.addEventListener('click', () => {
-    recompute();
-    running = false; btnPlay.textContent = '▶︎ Afspelen';
-    draw();
-  });
-
-  // Init en start render-loop
+  // Init
+  sizeCanvas();
   recompute();
   draw();
   requestAnimationFrame(frame);
