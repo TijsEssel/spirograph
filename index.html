@@ -36,10 +36,12 @@
     .hint{margin-top:6px; color:#6b7280; font-size:0.9rem}
 
     /* --- Canvas area --- */
-    main.canvas-wrap{position:relative; flex:1 1 auto; display:grid; place-items:center; padding:10px}
+    main.canvas-wrap{  position: relative;  display: grid;  place-items: center;  padding: 10px}
     canvas{display:block; background:#ffffff; border-radius:10px; box-shadow:0 8px 28px rgba(0,0,0,.08)}
     #info{position:absolute; left:16px; top:16px; background:var(--info-bg); padding:8px 10px; border-radius:8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size:0.95rem; white-space:pre; backdrop-filter:saturate(180%) blur(2px)}
     #warn{position:absolute; left:16px; bottom:16px; background:#ffe9e9; color:#7a0b0b; border:1px solid #f3b9b9; padding:8px 10px; border-radius:8px; display:none}
+    #c{width: min(95svw, 95svh); height: auto;  aspect-ratio: 1 / 1;  background: #fff;  border-radius: 10px}
+
 
     @media (min-width: 960px){ header .title{font-size:1.15rem} }
   </style>
@@ -64,11 +66,13 @@
     </div>
   </header>
 
-  <main class="canvas-wrap">
-    <canvas id="c" width="900" height="900"></canvas>
-    <div id="info"></div>
-    <div id="warn"></div>
-  </main>
+
+<main class="canvas-wrap">
+  <canvas id="c"></canvas>
+  <div id="info"></div>
+  <div id="warn"></div>
+</main>
+
 
 <script>
 (() => {
