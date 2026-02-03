@@ -86,7 +86,7 @@
 </head>
 <body>
   <header class="panel" id="topbar">
-    <div class="title">Hypotrochoïde / Epitrochoïde</div>
+    <div class="title">Spirograph</div>
 
     <!-- Nieuw: modus-knoppen -->
     <div class="controls" style="margin-bottom:6px">
@@ -109,10 +109,7 @@
       </div>
     </div>
 
-    <div class="top-meta">
-      <div class="hint">Tip: R2&lt;0 ⇒ hypotrochoïde; R2&gt;0 ⇒ epitrochoïde.</div>
-      <pre id="info" class="info"></pre>
-    </div>
+
   </header>
 
   <main class="canvas-wrap">
@@ -319,9 +316,9 @@
 
     // Live rotaties (in rotations = rad/(2π))
     const n_center = t / TAU; const n_abs = (k * t) / TAU; const n_rel = ((k * t) - t) / TAU;
-    info.textContent = `omwentelingen : ${n_center.toFixed(4)} rot\n`+
-                       `relatieve rotaties : ${n_rel.toFixed(4)} rot\n`+
-                       `absolute rotaties : ${n_abs.toFixed(4)} rot`;
+    info.textContent = `omwentelingen : ${n_center.toFixed(2)} rot\n`+
+                       `relatieve rotaties : ${n_rel.toFixed(2)} rot\n`+
+                       `absolute rotaties : ${n_abs.toFixed(2)} rot`;
     ctx.restore();
   }
 
