@@ -86,7 +86,7 @@
 </head>
 <body>
   <header class="panel" id="topbar">
-    <div class="title">Spirograph</div>
+    <div class="title">De Wondere Wereld - Spirograph</div>
 
     <!-- Nieuw: modus-knoppen -->
     <div class="controls" style="margin-bottom:6px">
@@ -125,7 +125,7 @@
   const info = $("info");
   const warn = $("warn");
   const topbar = $("topbar");
-
+  const GRAY_STROKE = '#888888';  // middelgrijs
   // VisualViewport-aware sizing (mobile friendly)
   function viewportSize(){
     const vv = window.visualViewport;
@@ -284,22 +284,22 @@
     points.push([x,y]);
 
     // Grote cirkel
-    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.2;
+    ctx.strokeStyle = GRAY_STROKE; ctx.lineWidth = 1.0;
     ctx.beginPath();
     const [cx0, cy0] = worldToCanvas(0,0);
     ctx.arc(cx0, cy0, Math.abs(R1)*scale, 0, TAU);
     ctx.stroke();
 
     // Kleine rollende cirkel
-    ctx.strokeStyle = '#2ca02c'; ctx.lineWidth = 1.0;
+    ctx.strokeStyle = GRAY_STROKE; ctx.lineWidth = 1.0;
     ctx.beginPath();
     const [cxR2, cyR2] = worldToCanvas(xmR2, ymR2);
     ctx.arc(cxR2, cyR2, Math.abs(R2)*scale, 0, TAU);
     ctx.stroke();
 
     // Stralen
-    ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx0, cy0); ctx.lineTo(cxR2, cyR2); ctx.stroke();
-    ctx.strokeStyle = '#2ca02c'; ctx.lineWidth = 2; ctx.beginPath(); const [cxi, cyi] = worldToCanvas(x, y); ctx.moveTo(cxR2, cyR2); ctx.lineTo(cxi, cyi); ctx.stroke();
+    ctx.strokeStyle = GRAY_STROKE; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx0, cy0); ctx.lineTo(cxR2, cyR2); ctx.stroke();
+    ctx.strokeStyle = GRAY_STROKE; ctx.lineWidth = 2; ctx.beginPath(); const [cxi, cyi] = worldToCanvas(x, y); ctx.moveTo(cxR2, cyR2); ctx.lineTo(cxi, cyi); ctx.stroke();
 
     // Trace tekenen
     ctx.strokeStyle = curveColor; ctx.lineWidth = 1.6;
