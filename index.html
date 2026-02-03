@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hypotrochoïde / Epitrochoïde – HTML5 Canvas (Mobiel)</title>
+  <title>Hypotrochoïde / Epitrochoïde – HTML5 Canvas (Info naast tip)</title>
   <style>
     :root{
       --panel-bg:#f7f7f9;
@@ -18,7 +18,7 @@
     body{margin:0; font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, Noto Sans, sans-serif; color:var(--text); background:#fff; display:flex; flex-direction:column;}
 
     /* --- Top panel above the canvas --- */
-    header.panel{position:sticky; top:0; z-index:10; background:var(--panel-bg); border-bottom:1px solid var(--panel-border); padding: max(10px, env(safe-area-inset-top)) var(--gap) 10px var(--gap);}
+    header.panel{position:sticky; top:0; z-index:10; background:var(--panel-bg); border-bottom:1px solid var(--panel-border); padding: max(10px, env(safe-area-inset-top)) var(--gap) 10px var(--gap);}    
     header .title{font-size:1.05rem; font-weight:700; margin:0 0 8px 0}
 
     /* Controls arranged responsively */
@@ -33,15 +33,19 @@
     button{display:inline-flex; align-items:center; gap:6px; cursor:pointer; background:var(--accent); color:white; border:none; border-radius:10px; padding:10px 14px; font-weight:700; min-height:44px}
     button.ghost{background:#e5e7eb; color:#111827}
 
-    .hint{margin-top:6px; color:#6b7280; font-size:0.9rem}
+    /* Tip + info naast elkaar */
+    .top-meta{display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap; margin-top:6px}
+    .hint{color:#6b7280; font-size:0.9rem; padding:6px 10px; background:transparent; border-radius:8px}
+    .info{margin:0; /* <pre> reset */
+          background:var(--info-bg); padding:6px 8px; border-radius:8px;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+          font-size:0.8rem; white-space:pre; line-height:1.25}
 
     /* --- Canvas area --- */
-    main.canvas-wrap{  position: relative;  display: grid;  place-items: center;  padding: 10px}
-    canvas{display:block; background:#ffffff; border-radius:10px; box-shadow:0 8px 28px rgba(0,0,0,.08)}
-    #info{position:absolute; left:16px; top:16px; background:var(--info-bg); padding:8px 10px; border-radius:8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size:0.6rem; white-space:pre; backdrop-filter:saturate(180%) blur(2px)}
+    main.canvas-wrap{ position: relative; display: grid; place-items: center; padding: 10px}
+    /* Canvas scales to the screen; internal buffer is set in JS */
+    #c{ width: min(95svw, 95svh); height: auto; aspect-ratio: 1 / 1; background: #ffffff; border-radius:10px; box-shadow:0 8px 28px rgba(0,0,0,.08)}
     #warn{position:absolute; left:16px; bottom:16px; background:#ffe9e9; color:#7a0b0b; border:1px solid #f3b9b9; padding:8px 10px; border-radius:8px; display:none}
-    #c{width: min(95svw, 95svh); height: auto;  aspect-ratio: 1 / 1;  background: #fff;  border-radius: 10px}
-
 
     @media (min-width: 960px){ header .title{font-size:1.15rem} }
   </style>
@@ -61,18 +65,16 @@
         <button id="reset" class="ghost">↺ Reset</button>
       </div>
     </div>
-    <div class="hint">
-      Tip: R2<0 : hypotrochoïde;R2>0 : epitrochoïde.
+    <div class="top-meta">
+      <div class="hint">Tip: R2&lt;0 ⇒ hypotrochoïde; R2&gt;0 ⇒ epitrochoïde.</div>
+      <pre id="info" class="info"></pre>
     </div>
   </header>
 
-
-<main class="canvas-wrap">
-  <canvas id="c"></canvas>
-  <div id="info"></div>
-  <div id="warn"></div>
-</main>
-
+  <main class="canvas-wrap">
+    <canvas id="c"></canvas>
+    <div id="warn"></div>
+  </main>
 
 <script>
 (() => {
@@ -83,7 +85,7 @@
   const warn = $("warn");
   const topbar = $("topbar");
 
-  // Use VisualViewport (when available) for immediate, precise sizing on mobile
+  // VisualViewport-aware sizing (mobile friendly)
   function viewportSize(){
     const vv = window.visualViewport;
     if (vv && typeof vv.width === 'number' && typeof vv.height === 'number') {
@@ -106,7 +108,7 @@
     setupHiDPI();
   }
 
-  // HiDPI scaling based on the CSS pixel size of the canvas
+  // HiDPI scaling
   function setupHiDPI() {
     const ratio = Math.max(1, window.devicePixelRatio || 1);
     const rect = c.getBoundingClientRect();
@@ -117,7 +119,6 @@
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
   }
 
-  // Respond to all relevant viewport changes for instant scaling
   function bindResizeEvents(){
     const recalc = () => { sizeCanvas(); recompute(); draw(); };
     window.addEventListener('resize', recalc, {passive:true});
@@ -125,7 +126,7 @@
     window.addEventListener('pageshow', recalc, {passive:true});
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', recalc, {passive:true});
-      window.visualViewport.addEventListener('scroll', recalc, {passive:true}); // address bar show/hide
+      window.visualViewport.addEventListener('scroll', recalc, {passive:true});
     }
   }
 
@@ -141,14 +142,14 @@
   const btnPlay = $("playPause");
   const btnReset = $("reset");
 
-  // Model state
+  // Model
   let R1=35, R2=-12, delta=75;
   let curveColor = '#0074D9', bgColor = '#ffffff';
   let running = false;
   let t = 0, tEnd = 0, k = 0, x1 = 0;
   let lastTs = 0;
   let points = []; // trace
-  let scale = 1, cx = 0, cy = 0, margin = 0;
+  let scale = 1, cx = 0, cy = 0;
 
   function readInputs(){
     R1 = Math.max(1, Math.trunc(+inputs.R1.value || 1));
@@ -168,16 +169,27 @@
       draw();
       return;
     }
+
     const g = gcd(R1, R2);
     const omwentelingen = R2 / g; // kan negatief zijn
     tEnd = Math.abs(omwentelingen) * TAU;
     k = 1 + (R1 / R2);
     x1 = Math.abs(R2) * (delta/100);
 
-    // Schaal zoals in het Python-voorbeeld: m = 1.30*|R1| + 2*|R2| + 0.5*|x1|
-    margin = 1.30 * Math.abs(R1) + 2*Math.abs(R2) + 0.5*Math.abs(x1);
+    // === Nieuwe, strakke schaal die alles in beeld houdt ===
+    // Bereik van de curve: max afstand tot oorsprong is |R1 + R2| + |x1|
+    const radialCurve  = Math.abs(R1 + R2) + Math.abs(x1);
+    // Grote vaste cirkel heeft straal |R1|
+    const radialBig    = Math.abs(R1);
+    // Optioneel: ook de rollende cirkel (omtrek) volledig tonen
+    const radialRoller = Math.abs(R1 + R2) + Math.abs(R2);
+
+    const radialExtent = Math.max(radialCurve, radialBig, radialRoller) || 1;
+
     const maxSide = Math.min(c.clientWidth, c.clientHeight);
-    scale = (0.90 * maxSide/2) / (margin || 1);
+    const padding = 0.98; // kleine marge zodat er niets klipt
+    scale = (padding * maxSide/2) / radialExtent;
+
     cx = c.clientWidth/2; cy = c.clientHeight/2;
 
     // Reset animatiestatus
@@ -275,10 +287,9 @@
   btnPlay.addEventListener('click', () => { if(R2 === 0) return; running = !running; btnPlay.textContent = running ? '❚❚ Pauze' : '▶︎ Afspelen'; });
   btnReset.addEventListener('click', () => { recompute(); running = false; btnPlay.textContent = '▶︎ Afspelen'; draw(); });
 
-  // Init: size immediately (twice) so it fits exact mobile viewport including dynamic bars
+  // Init
   bindResizeEvents();
   sizeCanvas();
-  // A second pass on next frame stabilizes after fonts/UI settle (mobile browsers)
   requestAnimationFrame(() => { sizeCanvas(); recompute(); draw(); requestAnimationFrame(frame); });
 })();
 </script>
